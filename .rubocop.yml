@@ -2,17 +2,15 @@ AllCops:
   TargetRubyVersion: 3.1
   NewCops: enable
   SuggestExtensions: false
-
-Style/Documentation:
+Style:
   Enabled: false
-
-Style/FrozenStringLiteralComment:
-  EnforcedStyle: always
-
-Metrics/BlockLength:
-  Exclude:
-    - "spec/**/*"
-    - "*.gemspec"
-
-Layout/LineLength:
-  Max: 120
+Metrics:
+  Enabled: false
+Naming:
+  Enabled: false
+Lint:
+  Enabled: false
+Layout:
+  Enabled: false
+Bundler/OrderedGems:
+  Enabled: false
