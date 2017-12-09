@@ -187,11 +187,489 @@ RSpec.describe Philiprehberger::SafeExec do
       it 'raises on unexpected characters' do
         expect { described_class.evaluate('2 @ 3') }.to raise_error(Philiprehberger::SafeExec::Error)
       end
+
+      it 'raises on unmatched opening parenthesis' do
+        expect { described_class.evaluate('(2 + 3') }.to raise_error(Philiprehberger::SafeExec::Error)
+      end
+
+      it 'raises on unmatched closing parenthesis' do
+        expect { described_class.evaluate('2 + 3)') }.to raise_error(Philiprehberger::SafeExec::Error)
+      end
+
+      it 'raises on consecutive operators' do
+        expect { described_class.evaluate('2 + + 3') }.to raise_error(Philiprehberger::SafeExec::Error)
+      end
+
+      it 'raises on empty parentheses' do
+        expect { described_class.evaluate('()') }.to raise_error(Philiprehberger::SafeExec::Error)
+      end
+
+      it 'raises on trailing operator' do
+        expect { described_class.evaluate('5 *') }.to raise_error(Philiprehberger::SafeExec::Error)
+      end
+
+      it 'raises on unmatched bracket' do
+        expect { described_class.evaluate('items[0', { items: [1] }) }.to raise_error(Philiprehberger::SafeExec::Error)
+      end
+    end
+
+    context 'with empty and whitespace expressions' do
+      it 'raises on empty string' do
+        expect { described_class.evaluate('') }.to raise_error(Philiprehberger::SafeExec::Error)
+      end
+
+      it 'raises on whitespace-only string' do
+        expect { described_class.evaluate('   ') }.to raise_error(Philiprehberger::SafeExec::Error)
+      end
+    end
+
+    context 'with negation edge cases' do
+      it 'handles double negation of boolean' do
+        expect(described_class.evaluate('!!true')).to be true
+      end
+
+      it 'handles negation of numeric value' do
+        expect(described_class.evaluate('-(-5)')).to eq(5)
+      end
+
+      it 'negates a variable from context' do
+        expect(described_class.evaluate('-x', { x: 10 })).to eq(-10)
+      end
+
+      it 'handles not on comparison result' do
+        expect(described_class.evaluate('!(5 > 3)')).to be false
+      end
+    end
+
+    context 'with division edge cases' do
+      it 'raises on division by zero with float numerator' do
+        expect { described_class.evaluate('10.0 / 0') }.to raise_error(Philiprehberger::SafeExec::Error, /division by zero/)
+      end
+
+      it 'raises on division by zero with float zero' do
+        expect { described_class.evaluate('10 / 0.0') }.to raise_error(Philiprehberger::SafeExec::Error, /division by zero/)
+      end
+
+      it 'performs integer division truncation' do
+        expect(described_class.evaluate('7 / 2')).to eq(3)
+      end
+
+      it 'performs float division when one operand is float' do
+        expect(described_class.evaluate('7.0 / 2')).to be_within(0.01).of(3.5)
+      end
+    end
+
+    context 'with string edge cases' do
+      it 'handles empty string literal' do
+        expect(described_class.evaluate("''")).to eq('')
+      end
+
+      it 'concatenates string with number' do
+        expect(described_class.evaluate("'count: ' + 5")).to eq('count: 5')
+      end
+
+      it 'concatenates number with string' do
+        expect(described_class.evaluate("5 + ' items'")).to eq('5 items')
+      end
+
+      it 'compares different strings as not equal' do
+        expect(described_class.evaluate("'hello' == 'world'")).to be false
+      end
+
+      it 'handles string with spaces' do
+        expect(described_class.evaluate("'hello world'")).to eq('hello world')
+      end
+    end
+
+    context 'with nil edge cases' do
+      it 'evaluates nil != non-nil as true' do
+        expect(described_class.evaluate('nil != 0')).to be true
+      end
+
+      it 'evaluates non-nil != nil as true' do
+        expect(described_class.evaluate('5 != nil')).to be true
+      end
+
+      it 'resolves a context variable set to nil' do
+        expect(described_class.evaluate('x == nil', { x: nil })).to be true
+      end
+    end
+
+    context 'with boolean literal edge cases' do
+      it 'evaluates true literal' do
+        expect(described_class.evaluate('true')).to be true
+      end
+
+      it 'evaluates false literal' do
+        expect(described_class.evaluate('false')).to be false
+      end
+
+      it 'short-circuits logical or' do
+        expect(described_class.evaluate('true || false')).to be true
+      end
+
+      it 'short-circuits logical and' do
+        expect(described_class.evaluate('false && true')).to be false
+      end
+
+      it 'chains multiple or operators' do
+        expect(described_class.evaluate('false || false || true')).to be true
+      end
+
+      it 'chains multiple and operators' do
+        expect(described_class.evaluate('true && true && false')).to be false
+      end
+    end
+
+    context 'with deeply nested access' do
+      it 'accesses deeply nested hash via dot notation' do
+        ctx = { a: { 'b' => { 'c' => 42 } } }
+        expect(described_class.evaluate('a.b.c', ctx)).to eq(42)
+      end
+
+      it 'accesses deeply nested array elements' do
+        ctx = { matrix: [[1, 2], [3, 4]] }
+        expect(described_class.evaluate('matrix[1][0]', ctx)).to eq(3)
+      end
+
+      it 'accesses array element property' do
+        ctx = { users: [{ 'name' => 'Alice' }, { 'name' => 'Bob' }] }
+        expect(described_class.evaluate('users[0].name', ctx)).to eq('Alice')
+      end
+
+      it 'returns nil for missing hash key' do
+        ctx = { obj: { 'a' => 1 } }
+        expect(described_class.evaluate("obj['missing']", ctx)).to be_nil
+      end
+
+      it 'returns nil for out-of-bounds array index' do
+        ctx = { items: [10, 20] }
+        expect(described_class.evaluate('items[5]', ctx)).to be_nil
+      end
+
+      it 'raises when indexing a non-indexable type' do
+        expect { described_class.evaluate('x[0]', { x: 42 }) }.to raise_error(Philiprehberger::SafeExec::Error, /cannot index/)
+      end
+
+      it 'raises when accessing property on non-hash' do
+        expect { described_class.evaluate('x.name', { x: 42 }) }.to raise_error(Philiprehberger::SafeExec::Error, /cannot access property/)
+      end
+
+      it 'raises when array index is not an integer' do
+        ctx = { items: [1, 2, 3] }
+        expect { described_class.evaluate("items['key']", ctx) }.to raise_error(Philiprehberger::SafeExec::Error, /array index must be an integer/)
+      end
+    end
+
+    context 'with negative array indices' do
+      it 'accesses last element with negative index' do
+        ctx = { items: [10, 20, 30] }
+        expect(described_class.evaluate('items[-1]', ctx)).to eq(30)
+      end
+    end
+
+    context 'with context variable edge cases' do
+      it 'handles symbol and string keys interchangeably' do
+        expect(described_class.evaluate('x', { 'x' => 100 })).to eq(100)
+        expect(described_class.evaluate('x', { x: 100 })).to eq(100)
+      end
+
+      it 'resolves boolean context variables' do
+        expect(described_class.evaluate('active', { active: true })).to be true
+      end
+
+      it 'resolves array context variable' do
+        ctx = { nums: [1, 2, 3] }
+        expect(described_class.evaluate('nums[2]', ctx)).to eq(3)
+      end
+    end
+
+    context 'with complex arithmetic expressions' do
+      it 'handles multiple levels of nested parentheses' do
+        expect(described_class.evaluate('((2 + 3) * (4 - 1))')).to eq(15)
+      end
+
+      it 'handles subtraction with negative result' do
+        expect(described_class.evaluate('3 - 10')).to eq(-7)
+      end
+
+      it 'handles multiplication by zero' do
+        expect(described_class.evaluate('999 * 0')).to eq(0)
+      end
+
+      it 'handles chained additions' do
+        expect(described_class.evaluate('1 + 2 + 3 + 4 + 5')).to eq(15)
+      end
+
+      it 'handles mixed operations with floats and integers' do
+        expect(described_class.evaluate('2 * 3.5 + 1')).to be_within(0.01).of(8.0)
+      end
+    end
+
+    context 'with comparison chaining' do
+      it 'evaluates equality between strings from context' do
+        ctx = { role: 'admin' }
+        expect(described_class.evaluate("role == 'admin'", ctx)).to be true
+      end
+
+      it 'evaluates inequality between variables' do
+        ctx = { a: 5, b: 10 }
+        expect(described_class.evaluate('a != b', ctx)).to be true
+      end
+
+      it 'combines comparisons with boolean operators' do
+        ctx = { x: 15 }
+        expect(described_class.evaluate('x > 10 && x < 20', ctx)).to be true
+        expect(described_class.evaluate('x > 10 && x < 12', ctx)).to be false
+      end
+
+      it 'combines comparisons with or' do
+        ctx = { status: 'active' }
+        expect(described_class.evaluate("status == 'active' || status == 'pending'", ctx)).to be true
+      end
     end
 
     context 'with timeout' do
       it 'accepts a custom timeout' do
         expect(described_class.evaluate('1 + 1', {}, timeout: 1)).to eq(2)
+      end
+    end
+
+    context 'with error class hierarchy' do
+      it 'Error is a subclass of StandardError' do
+        expect(Philiprehberger::SafeExec::Error.superclass).to eq(StandardError)
+      end
+
+      it 'TimeoutError is a subclass of Error' do
+        expect(Philiprehberger::SafeExec::TimeoutError.superclass).to eq(Philiprehberger::SafeExec::Error)
+      end
+    end
+
+    context 'with DEFAULT_TIMEOUT constant' do
+      it 'has a default timeout of 5 seconds' do
+        expect(Philiprehberger::SafeExec::DEFAULT_TIMEOUT).to eq(5)
+      end
+    end
+
+    context 'with negative number literals' do
+      it 'parses negative integer literal' do
+        expect(described_class.evaluate('-42')).to eq(-42)
+      end
+
+      it 'parses negative float literal' do
+        expect(described_class.evaluate('-3.14')).to be_within(0.001).of(-3.14)
+      end
+    end
+
+    context 'with hash access via symbol keys in context' do
+      it 'accesses hash with symbol keys via bracket string lookup' do
+        ctx = { config: { enabled: true } }
+        expect(described_class.evaluate("config['enabled']", ctx)).to be true
+      end
+
+      it 'accesses hash with symbol keys via dot notation' do
+        ctx = { config: { enabled: true } }
+        expect(described_class.evaluate('config.enabled', ctx)).to be true
+      end
+
+      it 'returns nil for missing key via dot notation' do
+        ctx = { config: { 'a' => 1 } }
+        expect(described_class.evaluate('config.missing', ctx)).to be_nil
+      end
+    end
+
+    context 'with truthy and falsy values in boolean operators' do
+      it 'treats nil as falsy in logical and' do
+        expect(described_class.evaluate('x && true', { x: nil })).to be_nil
+      end
+
+      it 'treats nil as falsy in logical or' do
+        expect(described_class.evaluate('x || 42', { x: nil })).to eq(42)
+      end
+
+      it 'treats zero as truthy in logical and' do
+        expect(described_class.evaluate('x && true', { x: 0 })).to be true
+      end
+
+      it 'treats empty string as truthy in logical and' do
+        expect(described_class.evaluate("x && 'yes'", { x: '' })).to eq('yes')
+      end
+
+      it 'returns first truthy value in logical or' do
+        expect(described_class.evaluate('x || y', { x: 10, y: 20 })).to eq(10)
+      end
+
+      it 'returns last falsy value in chained and with nil' do
+        expect(described_class.evaluate('x && y && z', { x: true, y: nil, z: true })).to be_nil
+      end
+    end
+
+    context 'with deeply nested mixed access patterns' do
+      it 'accesses array inside hash inside array via mixed notation' do
+        ctx = { data: [{ 'tags' => ['ruby', 'gem'] }] }
+        expect(described_class.evaluate("data[0]['tags'][1]", ctx)).to eq('gem')
+      end
+
+      it 'accesses three levels of dot notation' do
+        ctx = { a: { 'b' => { 'c' => { 'd' => 99 } } } }
+        expect(described_class.evaluate('a.b.c.d', ctx)).to eq(99)
+      end
+
+      it 'combines dot notation and bracket notation in chain' do
+        ctx = { users: { 'list' => [{ 'name' => 'Eve' }] } }
+        expect(described_class.evaluate("users.list[0]['name']", ctx)).to eq('Eve')
+      end
+    end
+
+    context 'with additional arithmetic edge cases' do
+      it 'evaluates subtraction of two negative numbers' do
+        expect(described_class.evaluate('-3 - -2')).to eq(-1)
+      end
+
+      it 'evaluates multiplication of negative numbers' do
+        expect(described_class.evaluate('-3 * -4')).to eq(12)
+      end
+
+      it 'evaluates division of negative by positive' do
+        expect(described_class.evaluate('-10 / 2')).to eq(-5)
+      end
+
+      it 'evaluates a long chain of mixed operations' do
+        expect(described_class.evaluate('1 + 2 * 3 - 4 / 2')).to eq(5)
+      end
+
+      it 'handles float literal without leading digit before dot' do
+        expect(described_class.evaluate('0.5 + 0.5')).to be_within(0.001).of(1.0)
+      end
+    end
+
+    context 'with additional parse error edge cases' do
+      it 'raises on expression starting with a binary operator' do
+        expect { described_class.evaluate('* 5') }.to raise_error(Philiprehberger::SafeExec::Error)
+      end
+
+      it 'raises on expression with only an operator' do
+        expect { described_class.evaluate('+') }.to raise_error(Philiprehberger::SafeExec::Error)
+      end
+
+      it 'raises on mismatched bracket types' do
+        expect { described_class.evaluate('items[0)', { items: [1] }) }.to raise_error(Philiprehberger::SafeExec::Error)
+      end
+
+      it 'raises on expression with dangling dot' do
+        expect { described_class.evaluate('x.', { x: { 'a' => 1 } }) }.to raise_error(Philiprehberger::SafeExec::Error)
+      end
+
+      it 'raises on two adjacent number literals' do
+        expect { described_class.evaluate('5 5') }.to raise_error(Philiprehberger::SafeExec::Error)
+      end
+
+      it 'raises on incomplete boolean expression' do
+        expect { described_class.evaluate('true &&') }.to raise_error(Philiprehberger::SafeExec::Error)
+      end
+    end
+
+    context 'with string and comparison combinations' do
+      it 'evaluates double-quoted string equality' do
+        expect(described_class.evaluate('"abc" == "abc"')).to be true
+      end
+
+      it 'evaluates mixed-quote string equality' do
+        expect(described_class.evaluate(%q("hello" == 'hello'))).to be true
+      end
+
+      it 'evaluates string inequality' do
+        expect(described_class.evaluate("'foo' != 'bar'")).to be true
+      end
+
+      it 'concatenates empty string with non-empty' do
+        expect(described_class.evaluate("'' + 'hello'")).to eq('hello')
+      end
+
+      it 'concatenates string with boolean via context' do
+        expect(described_class.evaluate("'active: ' + x", { x: true })).to eq('active: true')
+      end
+    end
+
+    context 'with parenthesized expressions' do
+      it 'evaluates a single parenthesized literal' do
+        expect(described_class.evaluate('(42)')).to eq(42)
+      end
+
+      it 'evaluates deeply nested parentheses around a literal' do
+        expect(described_class.evaluate('(((10)))')).to eq(10)
+      end
+
+      it 'evaluates parenthesized boolean expression' do
+        expect(described_class.evaluate('(true || false) && (false || true)')).to be true
+      end
+    end
+
+    context 'with negation and not combined' do
+      it 'handles not applied to equality' do
+        expect(described_class.evaluate('!(1 == 2)')).to be true
+      end
+
+      it 'handles double not' do
+        expect(described_class.evaluate('!!false')).to be false
+      end
+
+      it 'handles negation of parenthesized arithmetic' do
+        expect(described_class.evaluate('-(2 + 3)')).to eq(-5)
+      end
+
+      it 'handles not combined with and/or' do
+        expect(described_class.evaluate('!false && !false')).to be true
+        expect(described_class.evaluate('!true || !true')).to be false
+      end
+    end
+
+    context 'with context variable used in complex expressions' do
+      it 'uses variables in nested arithmetic with comparisons' do
+        ctx = { a: 3, b: 4, c: 5 }
+        expect(described_class.evaluate('a * a + b * b == c * c', ctx)).to be true
+      end
+
+      it 'evaluates ternary-style pattern with boolean operators' do
+        ctx = { flag: true, val: 42 }
+        expect(described_class.evaluate('flag && val', ctx)).to eq(42)
+        expect(described_class.evaluate('!flag && val', ctx)).to be false
+      end
+
+      it 'handles context with many variables' do
+        ctx = { a: 1, b: 2, c: 3, d: 4, e: 5 }
+        expect(described_class.evaluate('a + b + c + d + e', ctx)).to eq(15)
+      end
+    end
+
+    context 'with negative array indices' do
+      it 'accesses second-to-last element' do
+        ctx = { items: [10, 20, 30, 40] }
+        expect(described_class.evaluate('items[-2]', ctx)).to eq(30)
+      end
+
+      it 'accesses first element via negative index equal to length' do
+        ctx = { items: [10, 20, 30] }
+        expect(described_class.evaluate('items[-3]', ctx)).to eq(10)
+      end
+
+      it 'returns nil for negative index beyond array bounds' do
+        ctx = { items: [10, 20] }
+        expect(described_class.evaluate('items[-5]', ctx)).to be_nil
+      end
+    end
+
+    context 'with whitespace variations' do
+      it 'evaluates expression with extra spaces' do
+        expect(described_class.evaluate('  2   +   3  ')).to eq(5)
+      end
+
+      it 'evaluates expression with tab characters' do
+        expect(described_class.evaluate("2\t+\t3")).to eq(5)
+      end
+
+      it 'evaluates expression with no spaces between tokens' do
+        expect(described_class.evaluate('2+3')).to eq(5)
       end
     end
   end
