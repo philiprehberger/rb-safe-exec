@@ -69,7 +69,7 @@ module Philiprehberger
         if left.is_a?(Integer) && right.is_a?(Integer)
           left / right
         else
-          left.to_f / right.to_f
+          left.to_f / right
         end
       end
 

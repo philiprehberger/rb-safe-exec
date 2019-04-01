@@ -42,7 +42,9 @@ RSpec.describe Philiprehberger::SafeExec do
       end
 
       it 'raises on division by zero' do
-        expect { described_class.evaluate('10 / 0') }.to raise_error(Philiprehberger::SafeExec::Error, /division by zero/)
+        expect do
+          described_class.evaluate('10 / 0')
+        end.to raise_error(Philiprehberger::SafeExec::Error, /division by zero/)
       end
     end
 
@@ -243,11 +245,15 @@ RSpec.describe Philiprehberger::SafeExec do
 
     context 'with division edge cases' do
       it 'raises on division by zero with float numerator' do
-        expect { described_class.evaluate('10.0 / 0') }.to raise_error(Philiprehberger::SafeExec::Error, /division by zero/)
+        expect do
+          described_class.evaluate('10.0 / 0')
+        end.to raise_error(Philiprehberger::SafeExec::Error, /division by zero/)
       end
 
       it 'raises on division by zero with float zero' do
-        expect { described_class.evaluate('10 / 0.0') }.to raise_error(Philiprehberger::SafeExec::Error, /division by zero/)
+        expect do
+          described_class.evaluate('10 / 0.0')
+        end.to raise_error(Philiprehberger::SafeExec::Error, /division by zero/)
       end
 
       it 'performs integer division truncation' do
@@ -348,16 +354,24 @@ RSpec.describe Philiprehberger::SafeExec do
       end
 
       it 'raises when indexing a non-indexable type' do
-        expect { described_class.evaluate('x[0]', { x: 42 }) }.to raise_error(Philiprehberger::SafeExec::Error, /cannot index/)
+        expect do
+          described_class.evaluate('x[0]', { x: 42 })
+        end.to raise_error(Philiprehberger::SafeExec::Error, /cannot index/)
       end
 
       it 'raises when accessing property on non-hash' do
-        expect { described_class.evaluate('x.name', { x: 42 }) }.to raise_error(Philiprehberger::SafeExec::Error, /cannot access property/)
+        expect do
+          described_class.evaluate('x.name',
+                                   { x: 42 })
+        end.to raise_error(Philiprehberger::SafeExec::Error, /cannot access property/)
       end
 
       it 'raises when array index is not an integer' do
         ctx = { items: [1, 2, 3] }
-        expect { described_class.evaluate("items['key']", ctx) }.to raise_error(Philiprehberger::SafeExec::Error, /array index must be an integer/)
+        expect do
+          described_class.evaluate("items['key']",
+                                   ctx)
+        end.to raise_error(Philiprehberger::SafeExec::Error, /array index must be an integer/)
       end
     end
 
@@ -506,7 +520,7 @@ RSpec.describe Philiprehberger::SafeExec do
 
     context 'with deeply nested mixed access patterns' do
       it 'accesses array inside hash inside array via mixed notation' do
-        ctx = { data: [{ 'tags' => ['ruby', 'gem'] }] }
+        ctx = { data: [{ 'tags' => %w[ruby gem] }] }
         expect(described_class.evaluate("data[0]['tags'][1]", ctx)).to eq('gem')
       end
 
