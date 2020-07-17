@@ -2,8 +2,7 @@
 
 [![Tests](https://github.com/philiprehberger/rb-safe-exec/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-safe-exec/actions/workflows/ci.yml)
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-safe_exec.svg)](https://rubygems.org/gems/philiprehberger-safe_exec)
-[![License](https://img.shields.io/github/license/philiprehberger/rb-safe-exec)](LICENSE)
-[![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ec6cb9)](https://github.com/sponsors/philiprehberger)
+[![Last updated](https://img.shields.io/github/last-commit/philiprehberger/rb-safe-exec)](https://github.com/philiprehberger/rb-safe-exec/commits/main)
 
 Sandboxed expression evaluator with whitelisted operations
 
@@ -115,6 +114,24 @@ bundle install
 bundle exec rspec
 bundle exec rubocop
 ```
+
+## Support
+
+If you find this project useful:
+
+⭐ [Star the repo](https://github.com/philiprehberger/rb-safe-exec)
+
+🐛 [Report issues](https://github.com/philiprehberger/rb-safe-exec/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
+
+💡 [Suggest features](https://github.com/philiprehberger/rb-safe-exec/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
+
+❤️ [Sponsor development](https://github.com/sponsors/philiprehberger)
+
+🌐 [All Open Source Projects](https://philiprehberger.com/open-source-packages)
+
+💻 [GitHub Profile](https://github.com/philiprehberger)
+
+🔗 [LinkedIn Profile](https://www.linkedin.com/in/philiprehberger)
 
 ## License
 
