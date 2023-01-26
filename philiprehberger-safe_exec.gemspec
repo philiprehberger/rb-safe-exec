@@ -11,15 +11,15 @@ Gem::Specification.new do |spec|
   spec.summary       = 'Sandboxed expression evaluator with whitelisted operations'
   spec.description   = 'Safely evaluate arithmetic, comparison, and boolean expressions from untrusted input. ' \
                        'Uses a custom parser with no eval, send, or method_missing. Includes timeout support.'
-  spec.homepage      = 'https://github.com/philiprehberger/rb-safe-exec'
+  spec.homepage      = 'https://philiprehberger.com/open-source-packages/ruby/philiprehberger-safe_exec'
   spec.license       = 'MIT'
 
   spec.required_ruby_version = '>= 3.1.0'
 
   spec.metadata['homepage_uri']          = spec.homepage
-  spec.metadata['source_code_uri']       = spec.homepage
-  spec.metadata['changelog_uri']         = "#{spec.homepage}/blob/main/CHANGELOG.md"
-  spec.metadata['bug_tracker_uri']       = "#{spec.homepage}/issues"
+  spec.metadata['source_code_uri']       = 'https://github.com/philiprehberger/rb-safe-exec'
+  spec.metadata['changelog_uri']         = 'https://github.com/philiprehberger/rb-safe-exec/blob/main/CHANGELOG.md'
+  spec.metadata['bug_tracker_uri']       = 'https://github.com/philiprehberger/rb-safe-exec/issues'
   spec.metadata['rubygems_mfa_required'] = 'true'
 
   spec.files = Dir['lib/**/*.rb', 'LICENSE', 'README.md', 'CHANGELOG.md']
