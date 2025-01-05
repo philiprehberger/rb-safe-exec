@@ -686,5 +686,104 @@ RSpec.describe Philiprehberger::SafeExec do
         expect(described_class.evaluate('2+3')).to eq(5)
       end
     end
+
+    context 'with ternary operator' do
+      it 'returns consequent when condition is true' do
+        expect(described_class.evaluate('true ? 1 : 2')).to eq(1)
+      end
+
+      it 'returns alternate when condition is false' do
+        expect(described_class.evaluate('false ? 1 : 2')).to eq(2)
+      end
+
+      it 'handles nested ternary expressions' do
+        expect(described_class.evaluate('true ? false ? 1 : 2 : 3')).to eq(2)
+      end
+
+      it 'works with comparison conditions' do
+        expect(described_class.evaluate('5 > 3 ? 10 : 20')).to eq(10)
+        expect(described_class.evaluate('5 < 3 ? 10 : 20')).to eq(20)
+      end
+
+      it 'works with context variables' do
+        ctx = { age: 25 }
+        expect(described_class.evaluate("age >= 18 ? 'adult' : 'minor'", ctx)).to eq('adult')
+      end
+    end
+
+    context 'with modulo operator' do
+      it 'evaluates basic modulo' do
+        expect(described_class.evaluate('10 % 3')).to eq(1)
+      end
+
+      it 'evaluates modulo with negative numbers' do
+        expect(described_class.evaluate('-7 % 3')).to eq(2)
+      end
+
+      it 'raises on modulo division by zero' do
+        expect do
+          described_class.evaluate('10 % 0')
+        end.to raise_error(Philiprehberger::SafeExec::Error, /division by zero/)
+      end
+
+      it 'evaluates modulo with floats' do
+        expect(described_class.evaluate('10.5 % 3')).to be_within(0.01).of(1.5)
+      end
+    end
+
+    context 'with built-in functions' do
+      it 'evaluates min()' do
+        expect(described_class.evaluate('min(3, 7)')).to eq(3)
+        expect(described_class.evaluate('min(10, 2)')).to eq(2)
+      end
+
+      it 'evaluates max()' do
+        expect(described_class.evaluate('max(3, 7)')).to eq(7)
+        expect(described_class.evaluate('max(10, 2)')).to eq(10)
+      end
+
+      it 'evaluates abs()' do
+        expect(described_class.evaluate('abs(-5)')).to eq(5)
+        expect(described_class.evaluate('abs(5)')).to eq(5)
+      end
+
+      it 'evaluates length() with a string' do
+        expect(described_class.evaluate("length('hello')")).to eq(5)
+      end
+
+      it 'evaluates length() with an array' do
+        ctx = { items: [1, 2, 3, 4] }
+        expect(described_class.evaluate('length(items)', ctx)).to eq(4)
+      end
+
+      it 'evaluates round() without precision' do
+        expect(described_class.evaluate('round(3.7)')).to eq(4)
+      end
+
+      it 'evaluates round() with precision' do
+        expect(described_class.evaluate('round(3.14159, 2)')).to be_within(0.001).of(3.14)
+      end
+
+      it 'raises for unknown function name' do
+        expect do
+          described_class.evaluate('unknown(1)')
+        end.to raise_error(Philiprehberger::SafeExec::Error)
+      end
+
+      it 'uses functions in larger expressions' do
+        expect(described_class.evaluate('max(2, 5) + min(1, 3)')).to eq(6)
+      end
+    end
+
+    context 'with string concatenation' do
+      it 'concatenates two string literals' do
+        expect(described_class.evaluate("'hello' + ' world'")).to eq('hello world')
+      end
+
+      it 'concatenates context variables with strings' do
+        ctx = { name: 'Alice' }
+        expect(described_class.evaluate("'Hello, ' + name", ctx)).to eq('Hello, Alice')
+      end
+    end
   end
 end

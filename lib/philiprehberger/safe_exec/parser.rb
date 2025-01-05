@@ -13,8 +13,10 @@ module Philiprehberger
       #
       # @return [Hash] the AST node
       # @raise [Philiprehberger::SafeExec::Error] on parse errors
+      BUILTIN_FUNCTIONS = %w[min max abs length round].freeze
+
       def parse
-        node = parse_or
+        node = parse_ternary
         raise Error, "unexpected token: #{current&.value}" if current
 
         node
@@ -37,6 +39,20 @@ module Philiprehberger
         raise Error, "expected #{type}, got #{token&.type || 'end of input'}" unless token&.type == type
 
         token
+      end
+
+      def parse_ternary
+        node = parse_or
+
+        if current&.type == :question
+          advance
+          consequent = parse_ternary
+          expect(:colon)
+          alternate = parse_ternary
+          node = { type: :ternary, condition: node, consequent: consequent, alternate: alternate }
+        end
+
+        node
       end
 
       def parse_or
@@ -91,7 +107,7 @@ module Philiprehberger
 
       def parse_multiplication
         left = parse_unary
-        while current&.type == :operator && %w[* /].include?(current.value)
+        while current&.type == :operator && %w[* / %].include?(current.value)
           op = advance.value
           right = parse_unary
           left = { type: :binary, op: op, left: left, right: right }
@@ -156,15 +172,33 @@ module Philiprehberger
           { type: :literal, value: nil }
         when :identifier
           advance
+          if BUILTIN_FUNCTIONS.include?(token.value) && current&.type == :lparen
+            advance
+            args = parse_arguments
+            expect(:rparen)
+            return { type: :function_call, name: token.value, args: args }
+          end
           { type: :identifier, name: token.value }
         when :lparen
           advance
-          node = parse_or
+          node = parse_ternary
           expect(:rparen)
           node
         else
           raise Error, "unexpected token: #{token.value}"
         end
+      end
+
+      def parse_arguments
+        args = []
+        return args if current&.type == :rparen
+
+        args << parse_ternary
+        while current&.type == :comma
+          advance
+          args << parse_ternary
+        end
+        args
       end
     end
   end

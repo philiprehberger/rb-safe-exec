@@ -9,6 +9,8 @@ module Philiprehberger
         @context = normalize_context(context)
       end
 
+      BUILTIN_FUNCTIONS = %w[min max abs length round].freeze
+
       # Evaluate an AST node
       #
       # @param node [Hash] the AST node
@@ -26,6 +28,8 @@ module Philiprehberger
         when :negate then -evaluate(node[:operand])
         when :index then evaluate_index(node)
         when :property then evaluate_property(node)
+        when :ternary then evaluate_ternary(node)
+        when :function_call then evaluate_function_call(node)
         else raise Error, "unknown node type: #{node[:type]}"
         end
       end
@@ -51,6 +55,7 @@ module Philiprehberger
         when '-' then left - right
         when '*' then left * right
         when '/' then evaluate_divide(left, right)
+        when '%' then evaluate_modulo(left, right)
         else raise Error, "unknown operator: #{node[:op]}"
         end
       end
@@ -71,6 +76,60 @@ module Philiprehberger
         else
           left.to_f / right
         end
+      end
+
+      def evaluate_modulo(left, right)
+        raise Error, 'division by zero' if right.is_a?(Numeric) && right.zero?
+
+        left % right
+      end
+
+      def evaluate_ternary(node)
+        condition = evaluate(node[:condition])
+        condition ? evaluate(node[:consequent]) : evaluate(node[:alternate])
+      end
+
+      def evaluate_function_call(node)
+        name = node[:name]
+        args = node[:args].map { |arg| evaluate(arg) }
+
+        raise Error, "unknown function: #{name}" unless BUILTIN_FUNCTIONS.include?(name)
+
+        send(:"builtin_#{name}", args)
+      end
+
+      def builtin_min(args)
+        raise Error, 'min() requires exactly 2 arguments' unless args.length == 2
+
+        args.min
+      end
+
+      def builtin_max(args)
+        raise Error, 'max() requires exactly 2 arguments' unless args.length == 2
+
+        args.max
+      end
+
+      def builtin_abs(args)
+        raise Error, 'abs() requires exactly 1 argument' unless args.length == 1
+
+        args[0].abs
+      end
+
+      def builtin_length(args)
+        raise Error, 'length() requires exactly 1 argument' unless args.length == 1
+
+        value = args[0]
+        raise Error, "length() expects a string or array, got #{value.class}" unless value.is_a?(String) || value.is_a?(Array)
+
+        value.length
+      end
+
+      def builtin_round(args)
+        raise Error, 'round() requires 1 or 2 arguments' unless [1, 2].include?(args.length)
+
+        precision = args.length == 2 ? args[1] : 0
+        args[0].round(precision)
       end
 
       def evaluate_comparison(node)
