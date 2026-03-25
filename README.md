@@ -82,7 +82,18 @@ Philiprehberger::SafeExec.evaluate('1 + 1', {}, timeout: 2)
 
 | Method | Description |
 |--------|-------------|
-| `SafeExec.evaluate(expr, context, timeout:)` | Evaluate an expression with context variables and optional timeout |
+| `SafeExec.evaluate(expr, context = {}, timeout: 5)` | Evaluate a sandboxed expression string with optional context variables and timeout (seconds) |
+| `SafeExec::Error` | Base error class for parse and evaluation failures |
+| `SafeExec::TimeoutError` | Raised when evaluation exceeds the timeout |
+| `SafeExec::DEFAULT_TIMEOUT` | Default timeout in seconds (`5`) |
+| `SafeExec::VERSION` | Gem version string |
+| `Tokenizer.tokenize(input)` | Tokenize an expression string into an array of `Token` structs |
+| `Tokenizer::Token` | Struct with `type` (Symbol) and `value` (String) fields |
+| `Tokenizer::TOKEN_PATTERNS` | Ordered array of `[type, regex]` pairs used by the tokenizer |
+| `Parser.new(tokens)` | Create a parser from an array of `Token` structs |
+| `Parser#parse` | Parse the token stream into an AST hash |
+| `Evaluator.new(context = {})` | Create an evaluator with a context hash (keys are normalized to strings) |
+| `Evaluator#evaluate(node)` | Evaluate an AST node and return the result |
 
 ### Supported Operations
 
