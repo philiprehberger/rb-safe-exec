@@ -100,8 +100,8 @@ Philiprehberger::SafeExec.evaluate('1 + 1', {}, timeout: 2)
 
 ```bash
 bundle install
-bundle exec rspec      # Run tests
-bundle exec rubocop    # Check code style
+bundle exec rspec
+bundle exec rubocop
 ```
 
 ## License
