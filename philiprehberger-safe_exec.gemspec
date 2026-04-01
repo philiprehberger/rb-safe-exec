@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = 'Sandboxed expression evaluator with whitelisted operations'
   spec.description = 'Safely evaluate arithmetic, comparison, and boolean expressions from untrusted input. ' \
-                       'Uses a custom parser with no eval, send, or method_missing. Includes timeout support.'
+                     'Uses a custom parser with no eval, send, or method_missing. Includes timeout support.'
   spec.homepage = 'https://philiprehberger.com/open-source-packages/ruby/philiprehberger-safe_exec'
   spec.license = 'MIT'
 
