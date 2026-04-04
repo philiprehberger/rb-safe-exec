@@ -42,6 +42,7 @@ Philiprehberger::SafeExec.evaluate('10 - 5')   # => 5
 Philiprehberger::SafeExec.evaluate('10 * 5')   # => 50
 Philiprehberger::SafeExec.evaluate('10 / 3')   # => 3 (integer division)
 Philiprehberger::SafeExec.evaluate('10.0 / 3') # => 3.333...
+Philiprehberger::SafeExec.evaluate('10 % 3')   # => 1
 ```
 
 ### Comparisons and Booleans
@@ -59,6 +60,24 @@ Philiprehberger::SafeExec.evaluate('age >= 18 && age < 65', { age: 25 })  # => t
 ```ruby
 Philiprehberger::SafeExec.evaluate("'hello' + ' ' + 'world'")  # => "hello world"
 Philiprehberger::SafeExec.evaluate("name == 'Alice'", { name: 'Alice' })  # => true
+```
+
+### Ternary Operator
+
+```ruby
+Philiprehberger::SafeExec.evaluate('true ? 1 : 2')                       # => 1
+Philiprehberger::SafeExec.evaluate('5 > 3 ? 10 : 20')                    # => 10
+Philiprehberger::SafeExec.evaluate("age >= 18 ? 'adult' : 'minor'", { age: 25 })  # => "adult"
+```
+
+### Built-in Functions
+
+```ruby
+Philiprehberger::SafeExec.evaluate('min(3, 7)')          # => 3
+Philiprehberger::SafeExec.evaluate('max(3, 7)')          # => 7
+Philiprehberger::SafeExec.evaluate('abs(-5)')             # => 5
+Philiprehberger::SafeExec.evaluate("length('hello')")     # => 5
+Philiprehberger::SafeExec.evaluate('round(3.14159, 2)')   # => 3.14
 ```
 
 ### Hash and Array Access
@@ -99,10 +118,12 @@ Philiprehberger::SafeExec.evaluate('1 + 1', {}, timeout: 2)
 
 | Category | Operations |
 |----------|-----------|
-| Arithmetic | `+`, `-`, `*`, `/` |
+| Arithmetic | `+`, `-`, `*`, `/`, `%` |
 | Comparison | `==`, `!=`, `>`, `<`, `>=`, `<=` |
 | Boolean | `&&`, `\|\|`, `!` |
+| Ternary | `condition ? value_if_true : value_if_false` |
 | String | concatenation via `+`, comparison |
+| Functions | `min(a, b)`, `max(a, b)`, `abs(n)`, `length(str_or_arr)`, `round(n, precision)` |
 | Access | `array[index]`, `hash['key']`, `hash.key` |
 | Literals | integers, floats, strings, booleans, nil |
 | Grouping | parentheses `()` |

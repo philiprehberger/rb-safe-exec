@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-03
+
+### Added
+- Ternary operator: `condition ? value_if_true : value_if_false`
+- Modulo operator: `%`
+- Built-in functions: `min(a, b)`, `max(a, b)`, `abs(n)`, `length(str_or_arr)`, `round(n, precision)`
+
 ## [0.1.7] - 2026-03-31
 
 ### Added
