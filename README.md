@@ -43,6 +43,7 @@ Philiprehberger::SafeExec.evaluate('10 * 5')   # => 50
 Philiprehberger::SafeExec.evaluate('10 / 3')   # => 3 (integer division)
 Philiprehberger::SafeExec.evaluate('10.0 / 3') # => 3.333...
 Philiprehberger::SafeExec.evaluate('10 % 3')   # => 1
+Philiprehberger::SafeExec.evaluate('2 ** 10')  # => 1024
 ```
 
 ### Comparisons and Booleans
@@ -78,6 +79,18 @@ Philiprehberger::SafeExec.evaluate('max(3, 7)')          # => 7
 Philiprehberger::SafeExec.evaluate('abs(-5)')             # => 5
 Philiprehberger::SafeExec.evaluate("length('hello')")     # => 5
 Philiprehberger::SafeExec.evaluate('round(3.14159, 2)')   # => 3.14
+Philiprehberger::SafeExec.evaluate('sqrt(16)')            # => 4.0
+Philiprehberger::SafeExec.evaluate('ceil(3.2)')           # => 4
+Philiprehberger::SafeExec.evaluate('floor(3.9)')          # => 3
+Philiprehberger::SafeExec.evaluate('pow(2, 10)')          # => 1024
+```
+
+### String Functions
+
+```ruby
+Philiprehberger::SafeExec.evaluate("upcase('hello')")      # => "HELLO"
+Philiprehberger::SafeExec.evaluate("downcase('HELLO')")    # => "hello"
+Philiprehberger::SafeExec.evaluate("trim('  hello  ')")    # => "hello"
 ```
 
 ### Hash and Array Access
@@ -118,12 +131,12 @@ Philiprehberger::SafeExec.evaluate('1 + 1', {}, timeout: 2)
 
 | Category | Operations |
 |----------|-----------|
-| Arithmetic | `+`, `-`, `*`, `/`, `%` |
+| Arithmetic | `+`, `-`, `*`, `/`, `%`, `**` |
 | Comparison | `==`, `!=`, `>`, `<`, `>=`, `<=` |
 | Boolean | `&&`, `\|\|`, `!` |
 | Ternary | `condition ? value_if_true : value_if_false` |
 | String | concatenation via `+`, comparison |
-| Functions | `min(a, b)`, `max(a, b)`, `abs(n)`, `length(str_or_arr)`, `round(n, precision)` |
+| Functions | `min(a, b)`, `max(a, b)`, `abs(n)`, `length(str_or_arr)`, `round(n, precision)`, `sqrt(n)`, `ceil(n)`, `floor(n)`, `pow(base, exp)`, `upcase(str)`, `downcase(str)`, `trim(str)` |
 | Access | `array[index]`, `hash['key']`, `hash.key` |
 | Literals | integers, floats, strings, booleans, nil |
 | Grouping | parentheses `()` |

@@ -9,8 +9,6 @@ module Philiprehberger
         @context = normalize_context(context)
       end
 
-      BUILTIN_FUNCTIONS = %w[min max abs length round].freeze
-
       # Evaluate an AST node
       #
       # @param node [Hash] the AST node
@@ -56,6 +54,7 @@ module Philiprehberger
         when '*' then left * right
         when '/' then evaluate_divide(left, right)
         when '%' then evaluate_modulo(left, right)
+        when '**' then left**right
         else raise Error, "unknown operator: #{node[:op]}"
         end
       end
@@ -93,7 +92,7 @@ module Philiprehberger
         name = node[:name]
         args = node[:args].map { |arg| evaluate(arg) }
 
-        raise Error, "unknown function: #{name}" unless BUILTIN_FUNCTIONS.include?(name)
+        raise Error, "unknown function: #{name}" unless SafeExec::BUILTIN_FUNCTIONS.include?(name)
 
         send(:"builtin_#{name}", args)
       end
@@ -130,6 +129,51 @@ module Philiprehberger
 
         precision = args.length == 2 ? args[1] : 0
         args[0].round(precision)
+      end
+
+      def builtin_sqrt(args)
+        raise Error, 'sqrt() requires exactly 1 argument' unless args.length == 1
+
+        Math.sqrt(args[0])
+      end
+
+      def builtin_ceil(args)
+        raise Error, 'ceil() requires exactly 1 argument' unless args.length == 1
+
+        args[0].ceil
+      end
+
+      def builtin_floor(args)
+        raise Error, 'floor() requires exactly 1 argument' unless args.length == 1
+
+        args[0].floor
+      end
+
+      def builtin_pow(args)
+        raise Error, 'pow() requires exactly 2 arguments' unless args.length == 2
+
+        args[0]**args[1]
+      end
+
+      def builtin_upcase(args)
+        raise Error, 'upcase() requires exactly 1 argument' unless args.length == 1
+        raise Error, "upcase() expects a string, got #{args[0].class}" unless args[0].is_a?(String)
+
+        args[0].upcase
+      end
+
+      def builtin_downcase(args)
+        raise Error, 'downcase() requires exactly 1 argument' unless args.length == 1
+        raise Error, "downcase() expects a string, got #{args[0].class}" unless args[0].is_a?(String)
+
+        args[0].downcase
+      end
+
+      def builtin_trim(args)
+        raise Error, 'trim() requires exactly 1 argument' unless args.length == 1
+        raise Error, "trim() expects a string, got #{args[0].class}" unless args[0].is_a?(String)
+
+        args[0].strip
       end
 
       def evaluate_comparison(node)

@@ -13,8 +13,6 @@ module Philiprehberger
       #
       # @return [Hash] the AST node
       # @raise [Philiprehberger::SafeExec::Error] on parse errors
-      BUILTIN_FUNCTIONS = %w[min max abs length round].freeze
-
       def parse
         node = parse_ternary
         raise Error, "unexpected token: #{current&.value}" if current
@@ -106,13 +104,23 @@ module Philiprehberger
       end
 
       def parse_multiplication
-        left = parse_unary
+        left = parse_exponentiation
         while current&.type == :operator && %w[* / %].include?(current.value)
           op = advance.value
-          right = parse_unary
+          right = parse_exponentiation
           left = { type: :binary, op: op, left: left, right: right }
         end
         left
+      end
+
+      def parse_exponentiation
+        base = parse_unary
+        if current&.type == :operator && current.value == '**'
+          advance
+          exponent = parse_exponentiation
+          base = { type: :binary, op: '**', left: base, right: exponent }
+        end
+        base
       end
 
       def parse_unary
@@ -172,7 +180,7 @@ module Philiprehberger
           { type: :literal, value: nil }
         when :identifier
           advance
-          if BUILTIN_FUNCTIONS.include?(token.value) && current&.type == :lparen
+          if SafeExec::BUILTIN_FUNCTIONS.include?(token.value) && current&.type == :lparen
             advance
             args = parse_arguments
             expect(:rparen)
