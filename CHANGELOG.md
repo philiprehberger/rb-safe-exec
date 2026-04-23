@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-10
+
+### Added
+- Exponentiation operator: `**` (right-associative, higher precedence than `*`/`/`)
+- Math functions: `sqrt(n)`, `ceil(n)`, `floor(n)`, `pow(base, exp)`
+- String functions: `upcase(str)`, `downcase(str)`, `trim(str)`
+
+### Changed
+- Consolidate `BUILTIN_FUNCTIONS` into a single module-level constant
+
 ## [0.2.0] - 2026-04-03
 
 ### Added

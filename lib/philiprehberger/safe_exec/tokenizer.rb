@@ -10,7 +10,7 @@ module Philiprehberger
         [:string, /\A"[^"]*"/],
         [:boolean, /\A(?:true|false)\b/],
         [:null, /\Anil\b/],
-        [:operator, %r{\A(?:&&|\|\||[!=]=|>=|<=|[+\-*/%><!])}],
+        [:operator, %r{\A(?:&&|\|\||\*\*|[!=]=|>=|<=|[+\-*/%><!])}],
         [:question, /\A\?/],
         [:colon, /\A:/],
         [:lparen, /\A\(/],

@@ -785,5 +785,134 @@ RSpec.describe Philiprehberger::SafeExec do
         expect(described_class.evaluate("'Hello, ' + name", ctx)).to eq('Hello, Alice')
       end
     end
+
+    context 'with exponentiation operator' do
+      it 'evaluates basic exponentiation' do
+        expect(described_class.evaluate('2 ** 3')).to eq(8)
+      end
+
+      it 'evaluates float exponentiation' do
+        expect(described_class.evaluate('4.0 ** 0.5')).to eq(2.0)
+      end
+
+      it 'evaluates right-associative exponentiation' do
+        expect(described_class.evaluate('2 ** 3 ** 2')).to eq(512)
+      end
+
+      it 'gives exponentiation higher precedence than multiplication' do
+        expect(described_class.evaluate('2 * 3 ** 2')).to eq(18)
+      end
+
+      it 'evaluates exponentiation with parentheses' do
+        expect(described_class.evaluate('(2 * 3) ** 2')).to eq(36)
+      end
+
+      it 'evaluates negative exponent' do
+        expect(described_class.evaluate('2 ** -1')).to eq(0.5)
+      end
+
+      it 'evaluates zero exponent' do
+        expect(described_class.evaluate('5 ** 0')).to eq(1)
+      end
+
+      it 'evaluates exponentiation with context variables' do
+        expect(described_class.evaluate('base ** exp', { base: 3, exp: 4 })).to eq(81)
+      end
+    end
+
+    context 'with math built-in functions' do
+      it 'evaluates sqrt()' do
+        expect(described_class.evaluate('sqrt(16)')).to eq(4.0)
+      end
+
+      it 'evaluates sqrt() with float' do
+        expect(described_class.evaluate('sqrt(2.0)')).to be_within(0.0001).of(1.4142)
+      end
+
+      it 'evaluates ceil()' do
+        expect(described_class.evaluate('ceil(3.2)')).to eq(4)
+      end
+
+      it 'evaluates ceil() with negative number' do
+        expect(described_class.evaluate('ceil(-3.7)')).to eq(-3)
+      end
+
+      it 'evaluates floor()' do
+        expect(described_class.evaluate('floor(3.9)')).to eq(3)
+      end
+
+      it 'evaluates floor() with negative number' do
+        expect(described_class.evaluate('floor(-3.2)')).to eq(-4)
+      end
+
+      it 'evaluates pow()' do
+        expect(described_class.evaluate('pow(2, 10)')).to eq(1024)
+      end
+
+      it 'evaluates pow() with float exponent' do
+        expect(described_class.evaluate('pow(9, 0.5)')).to eq(3.0)
+      end
+
+      it 'uses math functions in expressions' do
+        expect(described_class.evaluate('sqrt(16) + ceil(2.1)')).to eq(7.0)
+      end
+
+      it 'raises for sqrt() with wrong arity' do
+        expect do
+          described_class.evaluate('sqrt(1, 2)')
+        end.to raise_error(Philiprehberger::SafeExec::Error, /sqrt\(\) requires exactly 1 argument/)
+      end
+
+      it 'raises for pow() with wrong arity' do
+        expect do
+          described_class.evaluate('pow(2)')
+        end.to raise_error(Philiprehberger::SafeExec::Error, /pow\(\) requires exactly 2 arguments/)
+      end
+    end
+
+    context 'with string built-in functions' do
+      it 'evaluates upcase()' do
+        expect(described_class.evaluate("upcase('hello')")).to eq('HELLO')
+      end
+
+      it 'evaluates downcase()' do
+        expect(described_class.evaluate("downcase('HELLO')")).to eq('hello')
+      end
+
+      it 'evaluates trim()' do
+        expect(described_class.evaluate("trim('  hello  ')")).to eq('hello')
+      end
+
+      it 'evaluates trim() with tabs and newlines' do
+        ctx = { text: "\t hello \n" }
+        expect(described_class.evaluate('trim(text)', ctx)).to eq('hello')
+      end
+
+      it 'evaluates upcase() with context variable' do
+        expect(described_class.evaluate('upcase(name)', { name: 'alice' })).to eq('ALICE')
+      end
+
+      it 'chains string functions with concatenation' do
+        expect(described_class.evaluate("upcase('hello') + ' ' + downcase('WORLD')")).to eq('HELLO world')
+      end
+
+      it 'raises for upcase() with non-string' do
+        expect do
+          described_class.evaluate('upcase(42)')
+        end.to raise_error(Philiprehberger::SafeExec::Error, /upcase\(\) expects a string/)
+      end
+
+      it 'raises for downcase() with non-string' do
+        expect do
+          described_class.evaluate('downcase(true)')
+        end.to raise_error(Philiprehberger::SafeExec::Error, /downcase\(\) expects a string/)
+      end
+
+      it 'raises for trim() with non-string' do
+        expect do
+          described_class.evaluate('trim(123)')
+        end.to raise_error(Philiprehberger::SafeExec::Error, /trim\(\) expects a string/)
+      end
+    end
   end
 end

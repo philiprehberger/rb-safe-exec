@@ -14,6 +14,8 @@ module Philiprehberger
 
     DEFAULT_TIMEOUT = 5
 
+    BUILTIN_FUNCTIONS = %w[min max abs length round sqrt ceil floor pow upcase downcase trim].freeze
+
     # Evaluate a sandboxed expression with an optional context
     #
     # @param expr [String] the expression to evaluate
