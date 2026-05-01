@@ -103,6 +103,22 @@ Philiprehberger::SafeExec.evaluate("user['name']", context)    # => "Alice"
 Philiprehberger::SafeExec.evaluate('user.role', context)       # => "admin"
 ```
 
+### Compiled Expressions
+
+Pre-parse an expression once and evaluate it many times against different contexts —
+useful for rules engines and calculation pipelines.
+
+```ruby
+formula = Philiprehberger::SafeExec.compile('price * (1 + tax_rate) - discount')
+
+formula.evaluate(price: 100, tax_rate: 0.08, discount: 5)   # => 103.0
+formula.evaluate(price: 50,  tax_rate: 0.10, discount: 0)   # => 55.0
+
+formula.source  # => "price * (1 + tax_rate) - discount"
+```
+
+Syntax errors raise immediately at compile time, before any evaluation.
+
 ### Timeout
 
 ```ruby
@@ -115,6 +131,9 @@ Philiprehberger::SafeExec.evaluate('1 + 1', {}, timeout: 2)
 | Method | Description |
 |--------|-------------|
 | `SafeExec.evaluate(expr, context = {}, timeout: 5)` | Evaluate a sandboxed expression string with optional context variables and timeout (seconds) |
+| `SafeExec.compile(expr)` | Pre-parse an expression and return a reusable `Compiled` instance |
+| `Compiled#evaluate(context = {}, timeout: 5)` | Evaluate the compiled expression against a context |
+| `Compiled#source` | The original expression source string |
 | `SafeExec::Error` | Base error class for parse and evaluation failures |
 | `SafeExec::TimeoutError` | Raised when evaluation exceeds the timeout |
 | `SafeExec::DEFAULT_TIMEOUT` | Default timeout in seconds (`5`) |

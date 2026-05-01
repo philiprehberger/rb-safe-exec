@@ -25,25 +25,19 @@ module Philiprehberger
     # @raise [Error] on parse or evaluation errors
     # @raise [TimeoutError] if evaluation exceeds the timeout
     def self.evaluate(expr, context = {}, timeout: DEFAULT_TIMEOUT)
-      result = nil
-      error = nil
+      compile(expr).evaluate(context, timeout: timeout)
+    end
 
-      thread = Thread.new do
-        tokens = Tokenizer.tokenize(expr)
-        ast = Parser.new(tokens).parse
-        result = Evaluator.new(context).evaluate(ast)
-      rescue Error => e
-        error = e
-      end
-
-      unless thread.join(timeout)
-        thread.kill
-        raise TimeoutError, "expression evaluation timed out after #{timeout} seconds"
-      end
-
-      raise error if error
-
-      result
+    # Pre-parse an expression so it can be evaluated repeatedly against
+    # different contexts without re-tokenizing or re-parsing.
+    #
+    # @param expr [String] the expression to compile
+    # @return [Compiled] a reusable compiled expression
+    # @raise [Error] if the expression fails to tokenize or parse
+    def self.compile(expr)
+      Compiled.new(expr)
     end
   end
 end
+
+require_relative 'safe_exec/compiled'

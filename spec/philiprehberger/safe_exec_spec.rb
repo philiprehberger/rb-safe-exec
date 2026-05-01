@@ -915,4 +915,34 @@ RSpec.describe Philiprehberger::SafeExec do
       end
     end
   end
+
+  describe '.compile' do
+    it 'returns a Compiled expression' do
+      expect(described_class.compile('1 + 2')).to be_a(Philiprehberger::SafeExec::Compiled)
+    end
+
+    it 'evaluates the compiled expression with a context' do
+      compiled = described_class.compile('a + b')
+      expect(compiled.evaluate({ a: 1, b: 2 })).to eq(3)
+    end
+
+    it 'evaluates a compiled expression against multiple contexts independently' do
+      compiled = described_class.compile('price * 1.08')
+      expect(compiled.evaluate({ price: 100 })).to eq(108.0)
+      expect(compiled.evaluate({ price: 50 })).to eq(54.0)
+    end
+
+    it 'raises immediately on a syntax error before any evaluate call' do
+      expect { described_class.compile('1 + ') }.to raise_error(Philiprehberger::SafeExec::Error)
+    end
+
+    it 'honors per-call timeout' do
+      compiled = described_class.compile('a + b')
+      expect(compiled.evaluate({ a: 1, b: 2 }, timeout: 1)).to eq(3)
+    end
+
+    it 'exposes the original source via #source' do
+      expect(described_class.compile('x + 1').source).to eq('x + 1')
+    end
+  end
 end

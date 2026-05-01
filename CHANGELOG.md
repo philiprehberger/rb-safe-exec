@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-30
+
+### Added
+- `SafeExec.compile(expr)` returns a reusable `Compiled` expression that can be evaluated against many contexts without re-tokenizing or re-parsing — useful in rules engines and calculation pipelines
+- `Compiled#evaluate(context, timeout:)` evaluates the pre-parsed AST against a context with optional timeout
+- `Compiled#source` exposes the original expression string
+
+### Changed
+- `SafeExec.evaluate` now delegates to `compile(...).evaluate(...)` internally; behavior unchanged
+
 ## [0.3.0] - 2026-04-10
 
 ### Added
